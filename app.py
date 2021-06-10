@@ -13,20 +13,24 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from config import *
-#----------------------------------------------------------------------------#
-# App Config.
-#----------------------------------------------------------------------------#
-
-app = Flask(__name__)
-moment = Moment(app)
-app.config.from_object('config')
+from flask_migrate import Migrate
+ 
+app = Flask(__name__) 
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-
-# TODO: connect to a local postgresql database
-app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
+class Show(db.Model):
+  __tablename__ = 'Show'
+
+  id = db.Column(db.Integer, primary_key=True)
+  artist_id = db.Column(db.Integer, nullable=False)
+  venue_id = db.Column(db.Integer, nullable=False)
+  start_time = db.Column(db.DateTime, nullable=False)
+
+  def __repr__(self):
+    return f'<Show ID: {self.id}, Artist ID: {self.artist_id}, Venue ID: {self.venue_id}>'
 
 class Venue(db.Model):
     __tablename__ = 'Venue'
@@ -39,6 +43,18 @@ class Venue(db.Model):
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    website = db.Column(db.String(500))
+    genres = db.Column(db.ARRAY(db.String), nullable=False)  #array of strings
+    seeking_talent = db.Column(db.Boolean)
+    seeking_description = db.Column(db.String(500))
+    past_shows = db.Column(db.ARRAY(db.String), nullable=False)  #array of show ids -> relation with Shows table
+    past_shows_count = db.Column(db.Integer)
+    upcoming_shows = db.Column(db.ARRAY(db.Integer), nullable=False)  #array of show ids -> relation with Shows table
+    upcoming_shows_count = db.Column(db.Integer)
+
+    def __repr__(self):
+      return f'<Venue ID: {self.id}, Venue name: {self.name}>'
+
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -50,14 +66,25 @@ class Artist(db.Model):
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
+    genres = db.Column(db.ARRAY(db.String), nullable=False)  #array of strings
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    website = db.Column(db.String(120), nullable=True)
+    seeking_venue = db.Column(db.Boolean)
+    seeking_description = db.Column(db.String(500)) #What type of venue are they seeking
+    past_shows = db.Column(db.ARRAY(db.Integer), nullable=False) #array of show ids -> relation with Shows table
+    past_shows_count = db.Column(db.Integer)
+    upcoming_shows = db.Column(db.ARRAY(db.Integer), nullable=False)  #array of show ids -> relation with Shows table
+    upcoming_shows_count = db.Column(db.Integer)
+
+    def __repr__(self):
+      return f'<Artist ID: {self.id}, Artist name: {self.name}>'
+
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
-
+migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
@@ -109,6 +136,8 @@ def venues():
       "num_upcoming_shows": 0,
     }]
   }]
+  db.session.add_all(data)
+  db.session.commit()
   return render_template('pages/venues.html', areas=data);
 
 @app.route('/venues/search', methods=['POST'])
@@ -124,6 +153,8 @@ def search_venues():
       "num_upcoming_shows": 0,
     }]
   }
+  db.session.add_all(response)
+  db.session.commit()
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/venues/<int:venue_id>')
@@ -207,7 +238,10 @@ def show_venue(venue_id):
     "past_shows_count": 1,
     "upcoming_shows_count": 1,
   }
+
   data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
+  db.session.add_all(data1, data2, data3)
+  db.session.commit()
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
@@ -254,6 +288,8 @@ def artists():
     "id": 6,
     "name": "The Wild Sax Band",
   }]
+  db.session.add_all(data)
+  db.session.commit()
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
@@ -468,6 +504,9 @@ def shows():
     "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
     "start_time": "2035-04-15T20:00:00.000Z"
   }]
+
+  db.session.add_all(data)
+  db.session.commit()
   return render_template('pages/shows.html', shows=data)
 
 @app.route('/shows/create')
