@@ -8,16 +8,24 @@ import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+#from sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from config import *
 from flask_migrate import Migrate
- 
-app = Flask(__name__) 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+import sys
+
+#app = Flask(__name__) 
+#app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#db = SQLAlchemy(app)
+
+app = Flask(__name__)
+app.config.from_object('config')
+moment = Moment(app)
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
@@ -25,8 +33,8 @@ class Show(db.Model):
   __tablename__ = 'Show'
 
   id = db.Column(db.Integer, primary_key=True)
-  artist_id = db.Column(db.Integer, nullable=False)
-  venue_id = db.Column(db.Integer, nullable=False)
+  artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'))
+  venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'))
   start_time = db.Column(db.DateTime, nullable=False)
 
   def __repr__(self):
@@ -47,9 +55,9 @@ class Venue(db.Model):
     genres = db.Column(db.ARRAY(db.String), nullable=False)  #array of strings
     seeking_talent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
-    past_shows = db.Column(db.ARRAY(db.String), nullable=False)  #array of show ids -> relation with Shows table
+    past_shows = db.relationship('Show', backref='parent_venue_past', lazy=True, collection_class=list, cascade='save-update')
     past_shows_count = db.Column(db.Integer)
-    upcoming_shows = db.Column(db.ARRAY(db.Integer), nullable=False)  #array of show ids -> relation with Shows table
+    upcoming_shows = db.relationship('Show', backref='parent_venue_upcoming', lazy=True, collection_class=list, cascade='save-update')
     upcoming_shows_count = db.Column(db.Integer)
 
     def __repr__(self):
@@ -72,9 +80,10 @@ class Artist(db.Model):
     website = db.Column(db.String(120), nullable=True)
     seeking_venue = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500)) #What type of venue are they seeking
-    past_shows = db.Column(db.ARRAY(db.Integer), nullable=False) #array of show ids -> relation with Shows table
+    #past_shows = db.Column(db.ARRAY(db.Integer), nullable=False) #array of show ids -> relation with Shows table
+    past_shows = db.relationship('Show', backref='parent_artist_past', lazy=True, collection_class=list, cascade='save-update')
     past_shows_count = db.Column(db.Integer)
-    upcoming_shows = db.Column(db.ARRAY(db.Integer), nullable=False)  #array of show ids -> relation with Shows table
+    upcoming_shows = db.relationship('Show', backref='parent_artist_upcoming', lazy=True, collection_class=list, cascade='save-update')
     upcoming_shows_count = db.Column(db.Integer)
 
     def __repr__(self):
@@ -115,18 +124,20 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
+  """ data=[
+    {
+      "city": "San Francisco",
+      "state": "CA",
+      "venues": [{
+        "id": 1,
+        "name": "The Musical Hop",
+        "num_upcoming_shows": 0,
+          }, 
+          {
+            "id": 3,
+            "name": "Park Square Live Music & Coffee",
+            "num_upcoming_shows": 1,
+          }]
   }, {
     "city": "New York",
     "state": "NY",
@@ -135,10 +146,9 @@ def venues():
       "name": "The Dueling Pianos Bar",
       "num_upcoming_shows": 0,
     }]
-  }]
-  db.session.add_all(data)
-  db.session.commit()
-  return render_template('pages/venues.html', areas=data);
+  }] """
+  
+  return render_template('pages/venues.html', data = Venue.query.all())
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -254,14 +264,34 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  error = False
+  try:
+    # TODO: insert form data as a new Venue record in the db, instead
+    venue = Venue(name = request.form['name'],
+                  city = request.form['city'],
+                  state = request.form['state'],
+                  address = request.form['address'],
+                  phone = request.form['phone'],
+                  genres = [request.form['genres']],
+                  facebook_link = request.form['facebook_link'])
+    
+    # TODO: modify data to be the data object returned from db insertion
+    data = db.session.add(venue)
+    db.session.commit()
+    # on successful db insert, flash success
+    flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
 
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+  except:
+    error = True
+    db.session.rollback()
+    # TODO: on unsuccessful db insert, flash an error instead.
+    flash('An error occurred. Venue ' + request.form['name'] + ' could not be listed.')
+    print(sys.exc_info())
+
+  finally:
+    db.session.close()
+
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
@@ -278,7 +308,7 @@ def delete_venue(venue_id):
 @app.route('/artists')
 def artists():
   # TODO: replace with real data returned from querying the database
-  data=[{
+  """ data=[{
     "id": 4,
     "name": "Guns N Petals",
   }, {
@@ -287,10 +317,9 @@ def artists():
   }, {
     "id": 6,
     "name": "The Wild Sax Band",
-  }]
-  db.session.add_all(data)
-  db.session.commit()
-  return render_template('pages/artists.html', artists=data)
+  }] """
+  
+  return render_template('pages/artists.html', data=Artist.query.all())
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
@@ -468,7 +497,7 @@ def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
+  """ data=[{
     "venue_id": 1,
     "venue_name": "The Musical Hop",
     "artist_id": 4,
@@ -503,11 +532,9 @@ def shows():
     "artist_name": "The Wild Sax Band",
     "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
     "start_time": "2035-04-15T20:00:00.000Z"
-  }]
+  }] """
 
-  db.session.add_all(data)
-  db.session.commit()
-  return render_template('pages/shows.html', shows=data)
+  return render_template('pages/shows.html', data=Show.query.all())
 
 @app.route('/shows/create')
 def create_shows():

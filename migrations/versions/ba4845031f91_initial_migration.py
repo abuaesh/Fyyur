@@ -1,16 +1,16 @@
 """Initial migration
 
-Revision ID: da502cda6a23
+Revision ID: ba4845031f91
 Revises: 
-Create Date: 2021-06-09 06:10:28.080782
+Create Date: 2021-06-10 23:33:54.983212
 
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+
 
 # revision identifiers, used by Alembic.
-revision = 'da502cda6a23'
+revision = 'ba4845031f91'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,15 +24,15 @@ def upgrade():
     sa.Column('city', sa.String(length=120), nullable=True),
     sa.Column('state', sa.String(length=120), nullable=True),
     sa.Column('phone', sa.String(length=120), nullable=True),
-    sa.Column('genres', postgresql.ARRAY(sa.String()), nullable=False),
+    sa.Column('genres', sa.ARRAY(sa.String()), nullable=False),
     sa.Column('image_link', sa.String(length=500), nullable=True),
     sa.Column('facebook_link', sa.String(length=120), nullable=True),
     sa.Column('website', sa.String(length=120), nullable=True),
     sa.Column('seeking_venue', sa.Boolean(), nullable=True),
     sa.Column('seeking_description', sa.String(length=500), nullable=True),
-    sa.Column('past_shows', postgresql.ARRAY(sa.Integer()), nullable=False),
+    sa.Column('past_shows', sa.ARRAY(sa.Integer()), nullable=False),
     sa.Column('past_shows_count', sa.Integer(), nullable=True),
-    sa.Column('upcoming_shows', postgresql.ARRAY(sa.Integer()), nullable=False),
+    sa.Column('upcoming_shows', sa.ARRAY(sa.Integer()), nullable=False),
     sa.Column('upcoming_shows_count', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
@@ -53,12 +53,12 @@ def upgrade():
     sa.Column('image_link', sa.String(length=500), nullable=True),
     sa.Column('facebook_link', sa.String(length=120), nullable=True),
     sa.Column('website', sa.String(length=500), nullable=True),
-    sa.Column('genres', postgresql.ARRAY(sa.String()), nullable=False),
+    sa.Column('genres', sa.ARRAY(sa.String()), nullable=False),
     sa.Column('seeking_talent', sa.Boolean(), nullable=True),
     sa.Column('seeking_description', sa.String(length=500), nullable=True),
-    sa.Column('past_shows', postgresql.ARRAY(sa.String()), nullable=False),
+    sa.Column('past_shows', sa.ARRAY(sa.String()), nullable=False),
     sa.Column('past_shows_count', sa.Integer(), nullable=True),
-    sa.Column('upcoming_shows', postgresql.ARRAY(sa.Integer()), nullable=False),
+    sa.Column('upcoming_shows', sa.ARRAY(sa.Integer()), nullable=False),
     sa.Column('upcoming_shows_count', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
