@@ -268,14 +268,6 @@ def create_venue_submission():
   try:
     form = VenueForm()
     # TODO: insert form data as a new Venue record in the db, instead
-    """name = request.form['name']
-    city = request.form['city']
-    state = request.form['state']
-    address = request.form['address']
-    phone = request.form['phone']
-    genres = [request.form['genres']]
-    facebook_link = request.form['facebook_link']
-    """
     venue = Venue(name=form.name.data, 
                   city=form.city.data, 
                   state=form.state.data, 
@@ -495,14 +487,76 @@ def create_artist_form():
 def create_artist_submission():
   # called upon submitting the new artist listing form
   # TODO: insert form data as a new Venue record in the db, instead
-  # TODO: modify data to be the data object returned from db insertion
+  try:
+    form = ArtistForm()
+    # TODO: modify data to be the data object returned from db insertion
+    artist = Artist(name=form.name.data, 
+                    city=form.city.data, 
+                    state=form.state.data, 
+                    phone=form.phone.data, 
+                    image_link=form.image_link.data,
+                    website="www.any.com",
+                    genres=form.genres.data, 
+                    facebook_link=form.facebook_link.data,
+                    seeking_venue=True, #form.seeking_venue.data,
+                    seeking_description="" #form.seeking_description.data
+                    )
 
-  # on successful db insert, flash success
-  flash('Artist ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
+    data = db.session.add(artist)
+    db.session.commit()
+    # on successful db insert, flash success
+    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+    flash('Venue ' + form.name.data + ', ' + form.city.data + ' was successfully listed!')
+
+  except:
+    error = True
+    db.session.rollback()
+    # TODO: on unsuccessful db insert, flash an error instead.
+    flash('An error occurred. Venue ' + form.name.data + ' could not be listed.')
+    print(sys.exc_info())
+
+  finally:
+    db.session.close()
+  
   return render_template('pages/home.html')
 
+
+"""
+error = False
+  try:
+    form = VenueForm()
+    # TODO: insert form data as a new Venue record in the db, instead
+    venue = Venue(name=form.name.data, 
+                  city=form.city.data, 
+                  state=form.state.data, 
+                  address=form.address.data, 
+                  phone=form.phone.data, 
+                  image_link=form.image_link.data,
+                  website="www.any.com",
+                  genres=form.genres.data, 
+                  facebook_link=form.facebook_link.data,
+                  seeking_talent=True, #form.seeking_talent.data,
+                  seeking_description="" #form.seeking_description.data
+                  )
+  
+    
+    # TODO: modify data to be the data object returned from db insertion
+    data = db.session.add(venue)
+    db.session.commit()
+    # on successful db insert, flash success
+    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+    flash('Venue ' + form.name.data + ', ' + form.city.data + ' was successfully listed!')
+
+  except:
+    error = True
+    db.session.rollback()
+    # TODO: on unsuccessful db insert, flash an error instead.
+    flash('An error occurred. Venue ' + form.name.data + ' could not be listed.')
+    print(sys.exc_info())
+
+  finally:
+    db.session.close()
+"""
 
 #  Shows
 #  ----------------------------------------------------------------
