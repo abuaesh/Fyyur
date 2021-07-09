@@ -313,11 +313,11 @@ def delete_venue(venue_id):
 #  Artists
 #  ----------------------------------------------------------------
 @app.route('/artists')
-async def artists():
+def artists():
   # TODO: replace with real data returned from querying the database
-  print('artists function called')
-  data = await Artist.query.all()
-  print(data)
+  print('artists function called', file=sys.stderr)
+  data = Artist.query.all()
+  print(data, file=sys.stderr)
   return render_template('pages/artists.html', data=data)
 
 @app.route('/artists/search', methods=['POST'])
