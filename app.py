@@ -336,6 +336,7 @@ def show_artist(artist_id):
   # shows the venue page with the given venue_id
   artists=Artist.query.all()
   data = list(filter(lambda d: d.id == artist_id, artists))[0]
+  print(data)
   return render_template('pages/show_artist.html', artist=data)
 
 #  Update
@@ -416,7 +417,7 @@ def create_artist_submission():
                     genres=form.genres.data, 
                     facebook_link=form.facebook_link.data,
                     seeking_venue=True, #form.seeking_venue.data,
-                    seeking_description="" #form.seeking_description.data
+                    seeking_description="dance sing comedy" #form.seeking_description.data
                     )
 
     data = db.session.add(artist)
