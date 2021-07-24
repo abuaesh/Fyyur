@@ -484,8 +484,19 @@ def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
-  
-  return render_template('pages/shows.html', shows=Show.query.all())
+
+  # Retrieve list of shows:
+  shows = Show.query.all()
+
+  # Set artist and venue names:
+  artists = Artist.query.all()
+  venues = Venue.query.all()
+
+  for show in shows:
+    show.artist_name = list(filter(lambda d: d.id == show.artist_id, artists))[0]
+    show.venue_name = list(filter(lambda d: d.id == show.venue_id, venues))[0]
+
+  return render_template('pages/shows.html', shows=shows)
 
 @app.route('/shows/create')
 def create_shows():
