@@ -17,7 +17,12 @@
       <div class="form-group">
           <label for="start_time">Start Time</label>
           {{ form.start_time(class_ = 'form-control', placeholder='YYYY-MM-DD HH:MM', autofocus = true) }}
-        </div>
+      </div>
+      <div class="form-group">
+        <label for="image_link">Image Link</label>
+        <small>Select an image for the show</small>
+        {{ form.image_link(class_ = 'form-control', autofocus = true) }}
+      </div>
       <input type="submit" value="Create Show" class="btn btn-primary btn-lg btn-block">
     </form>
   </div>

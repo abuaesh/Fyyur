@@ -36,6 +36,7 @@ class Show(db.Model):
   artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'))
   venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'))
   start_time = db.Column(db.DateTime, nullable=False)
+  image_link = db.Column(db.String)
 
   def __repr__(self):
     return f'<Show ID: {self.id}, Artist ID: {self.artist_id}, Venue ID: {self.venue_id}>'
@@ -131,8 +132,8 @@ def venues():
     # Find the index of the area that matches this venue from areas list:
     area_not_found = True
     for a in areas:
-      if a.city == v.city and a.state == v.state:
-        a.venues.append(v)
+      if a["city"] == v.city and a["state"] == v.state:
+        a["venues"].append(v)
         area_not_found = False
     
     if area_not_found:
@@ -142,7 +143,8 @@ def venues():
                     "venues": [v]
                   }
       areas.append(new_area)
-  return render_template('pages/venues.html', data = areas)
+  print(areas)
+  return render_template('pages/venues.html', areas = areas)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -165,87 +167,11 @@ def search_venues():
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
-  data1={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
-    "past_shows": [{
-      "artist_id": 4,
-      "artist_name": "Guns N Petals",
-      "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-      "start_time": "2019-05-21T21:30:00.000Z"
-    }],
-    "upcoming_shows": [],
-    "past_shows_count": 1,
-    "upcoming_shows_count": 0,
-  }
-  data2={
-    "id": 2,
-    "name": "The Dueling Pianos Bar",
-    "genres": ["Classical", "R&B", "Hip-Hop"],
-    "address": "335 Delancey Street",
-    "city": "New York",
-    "state": "NY",
-    "phone": "914-003-1132",
-    "website": "https://www.theduelingpianos.com",
-    "facebook_link": "https://www.facebook.com/theduelingpianos",
-    "seeking_talent": False,
-    "image_link": "https://images.unsplash.com/photo-1497032205916-ac775f0649ae?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=750&q=80",
-    "past_shows": [],
-    "upcoming_shows": [],
-    "past_shows_count": 0,
-    "upcoming_shows_count": 0,
-  }
-  data3={
-    "id": 3,
-    "name": "Park Square Live Music & Coffee",
-    "genres": ["Rock n Roll", "Jazz", "Classical", "Folk"],
-    "address": "34 Whiskey Moore Ave",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "415-000-1234",
-    "website": "https://www.parksquarelivemusicandcoffee.com",
-    "facebook_link": "https://www.facebook.com/ParkSquareLiveMusicAndCoffee",
-    "seeking_talent": False,
-    "image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-    "past_shows": [{
-      "artist_id": 5,
-      "artist_name": "Matt Quevedo",
-      "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-      "start_time": "2019-06-15T23:00:00.000Z"
-    }],
-    "upcoming_shows": [{
-      "artist_id": 6,
-      "artist_name": "The Wild Sax Band",
-      "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-      "start_time": "2035-04-01T20:00:00.000Z"
-    }, {
-      "artist_id": 6,
-      "artist_name": "The Wild Sax Band",
-      "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-      "start_time": "2035-04-08T20:00:00.000Z"
-    }, {
-      "artist_id": 6,
-      "artist_name": "The Wild Sax Band",
-      "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-      "start_time": "2035-04-15T20:00:00.000Z"
-    }],
-    "past_shows_count": 1,
-    "upcoming_shows_count": 1,
-  }
+  print('THE VENUE ID IS: ' + venue_id)
+  venues = Venue.query.all()
 
-  data = list(filter(lambda d: d['id'] == venue_id, [data1, data2, data3]))[0]
-  db.session.add_all(data1, data2, data3)
-  db.session.commit()
+  data = list(filter(lambda d: d['id'] == venue_id, venues))[0]
+  
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
@@ -487,8 +413,11 @@ def shows():
   venues = Venue.query.all()
 
   for show in shows:
-    show.artist_name = list(filter(lambda d: d.id == show.artist_id, artists))[0]
-    show.venue_name = list(filter(lambda d: d.id == show.venue_id, venues))[0]
+    show.artist_name = list(filter(lambda d: d.id == show.artist_id, artists))[0].name
+    show.venue_name = list(filter(lambda d: d.id == show.venue_id, venues))[0].name
+    artist_image = list(filter(lambda d: d.id == show.artist_id, artists))[0].image_link
+    if artist_image is not "":
+      show.artist_image_link = artist_image
 
   return render_template('pages/shows.html', shows=shows)
 
@@ -507,7 +436,8 @@ def create_show_submission():
     form = ShowForm()
     show = Show(artist_id = form.artist_id.data,
                 venue_id = form.venue_id.data,
-                start_time = form.start_time.data)
+                start_time = form.start_time.data,
+                image_link = form.image_link.data)
     data = db.session.add(show)
     db.session.commit()
     # on successful db insert, flash success
