@@ -167,10 +167,24 @@ def search_venues():
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
-  print('THE VENUE ID IS: ' + venue_id)
+  
   venues = Venue.query.all()
 
-  data = list(filter(lambda d: d['id'] == venue_id, venues))[0]
+  data = list(filter(lambda d: d.id == venue_id, venues))[0]
+
+  # Update past and upcoming show count for this venue before displaying to user
+  #past shows will never become upcoming
+  # upcoming shows might become past
+  # so, we need to go through the upcoming shows list to find if any of them already happened in the past,
+  # if so, then, move the show from the upcoming list to the past list
+  # the counts are the sizes of both lists
+  for show in data.upcoming_shows:
+    show_time = datetime.strptime(str(show.start_time), "%Y-%m-%d %H:%M:%S")
+    if datetime.now > show_time:
+      data.upcoming_shows.remove(show)
+      data.past_shows.add(show)
+  data.past_shows_count = len(data.past_shows)
+  data.upcoming_shows_count = len(data.upcoming_shows)
   
   return render_template('pages/show_venue.html', venue=data)
 
@@ -241,15 +255,19 @@ def search_artists():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
-  response={
+  keywords=request.form.get('search_term', '')
+  response = Artist.query.filter(Artist.name.ilike(keywords))
+  '''response={
     "count": 1,
     "data": [{
       "id": 4,
       "name": "Guns N Petals",
       "num_upcoming_shows": 0,
     }]
-  }
-  return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+  }'''
+  print("SEARCH ARTIST Returned: ")
+  print(response)
+  return render_template('pages/search_artists.html', results=response, search_term=keywords)
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
@@ -407,19 +425,26 @@ def shows():
 
   # Retrieve list of shows:
   shows = Show.query.all()
-
+  result = []
   # Set artist and venue names:
   artists = Artist.query.all()
   venues = Venue.query.all()
 
   for show in shows:
-    show.artist_name = list(filter(lambda d: d.id == show.artist_id, artists))[0].name
-    show.venue_name = list(filter(lambda d: d.id == show.venue_id, venues))[0].name
+    x = {} # temp dictionary to hold each show's info and retrieve the names of the artist and venue in it
+    x["artist_id"] = show.artist_id
+    x["venue_id"] = show.venue_id
+    x["start_time"] = show.start_time
+    x["image_link"] = show.image_link
+    x["artist_name"] = list(filter(lambda d: d.id == show.artist_id, artists))[0].name
+    x["venue_name"] = list(filter(lambda d: d.id == show.venue_id, venues))[0].name
     artist_image = list(filter(lambda d: d.id == show.artist_id, artists))[0].image_link
-    if artist_image is not "":
-      show.artist_image_link = artist_image
+    x["artist_image_link"] = artist_image
+    result.append(x)
 
-  return render_template('pages/shows.html', shows=shows)
+  print(result)
+
+  return render_template('pages/shows.html', shows=result)
 
 @app.route('/shows/create')
 def create_shows():
