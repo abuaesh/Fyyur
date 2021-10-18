@@ -3,6 +3,7 @@
 #----------------------------------------------------------------------------#
 
 import json
+from datetime import date
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify
@@ -22,7 +23,7 @@ import sys
 #app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 #db = SQLAlchemy(app)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='static/templates')
 app.config.from_object('config')
 moment = Moment(app)
 db = SQLAlchemy(app)
@@ -152,17 +153,19 @@ def search_venues():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-  response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+  search = request.form.get('search_term', '')
+  venues = Venue.query.filter(Venue.name.ilike("%" + search + "%")).all()
+  data = []
+  for venue in venues:
+      data.append({
+          'id': venue.id,
+          'name': venue.name,
+      })
+  response = {
+      "count": len(venues),
+      "data": data
   }
-  db.session.add_all(response)
-  db.session.commit()
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+  return render_template('pages/search_venues.html', results=response, search_term=search)
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -181,7 +184,7 @@ def show_venue(venue_id):
   # the counts are the sizes of both lists
   for show in data.upcoming_shows:
     show_time = datetime.strptime(str(show.start_time), "%Y-%m-%d %H:%M:%S")
-    if datetime.now > show_time:
+    if date.today() > show_time.date():
       data.upcoming_shows.remove(show)
       data.past_shows.add(show)
   data.past_shows_count = len(data.past_shows)
@@ -270,21 +273,26 @@ def search_artists():
   # print(query)
   # response = db.session.execute(query)
 
-  search_query = request.form["search_term"]
-  print('\nSEARCH_KEYWORDS:'+ search_query)
-  query = db.session.query(
-          Artist.name
-      ).filter(
-          and_(
-              Artist.name.like("%"+search_query+"%")
-          )
-      ).order_by(Artist.name.asc())
+  search = request.form.get('search_term', '')
+  artists = Artist.query.filter(Artist.name.ilike("%" + search + "%")).all()
+  data = []
+  for artist in artists:
+      data.append({
+          'id': artist.id,
+          'name': artist.name,
+      })
+  response = {
+      "count": len(artists),
+      "data": data
+  }
 
-  response = db.session.execute(query)
+  
 
   print("SEARCH ARTIST Returned: ")
   print(response)
-  return render_template('pages/search_artists.html', results=response, search_term=search_query)
+
+  #print(response.fetchall())
+  return render_template('pages/search_artists.html', results=response, search_term=search)
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
