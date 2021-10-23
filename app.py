@@ -14,6 +14,7 @@ from sqlalchemy import and_
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
+from sqlalchemy.orm import backref
 from forms import *
 from config import *
 from flask_migrate import Migrate
@@ -58,7 +59,7 @@ class Venue(db.Model):
     genres = db.Column(db.ARRAY(db.String), nullable=False)  #array of strings
     seeking_talent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(500))
-    past_shows = db.relationship('Show', backref='parent_venue_past', lazy=True, collection_class=list, cascade='save-update')
+    past_shows = db.relationship('Show', backref=backref('parent_venue_past', uselist=False), lazy=True, collection_class=list, cascade='save-update')
     past_shows_count = db.Column(db.Integer)
     upcoming_shows = db.relationship('Show', backref='parent_venue_upcoming', lazy=True, collection_class=list, cascade='save-update')
     upcoming_shows_count = db.Column(db.Integer)
@@ -186,7 +187,7 @@ def show_venue(venue_id):
     show_time = datetime.strptime(str(show.start_time), "%Y-%m-%d %H:%M:%S")
     if date.today() > show_time.date():
       data.upcoming_shows.remove(show)
-      data.past_shows.add(show)
+      data.past_shows.append(show)
   data.past_shows_count = len(data.past_shows)
   data.upcoming_shows_count = len(data.upcoming_shows)
   
