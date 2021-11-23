@@ -24,7 +24,7 @@ import sys
 #app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 #db = SQLAlchemy(app)
 
-app = Flask(__name__, template_folder='static/templates')
+app = Flask(__name__, template_folder='templates')
 app.config.from_object('config')
 moment = Moment(app)
 db = SQLAlchemy(app)
