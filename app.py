@@ -177,14 +177,19 @@ def show_venue(venue_id):
 
   #data = list(filter(lambda d: d.id == venue_id, venues))[0]
   data = {}
-  print(date.today())
-  data.past_shows = db.session.query(Show).\
+  today = date.today()
+  print(today)
+  data['past_shows'] = Show.query.filter_by(venue_id=venue_id).all()
+            #.filter()
+  print('\n\n\n', data,'\n\n\n')
+  data['upcoming_shows'] = Show.query.filter_by(venue_id=venue_id).all()
+  """ data.past_shows = db.session.query(Show).\
         filter(Show.venue_id == venue_id).\
         filter(date.today() > datetime.strptime(str(Show.start_time), "%Y-%m-%d %H:%M:%S").date())
 
   data.upcoming_shows = db.session.query(Show).\
         filter(Show.venue_id == venue_id).\
-        filter(date.today() <= datetime.strptime(str(Show.start_time), "%Y-%m-%d %H:%M:%S").date())
+        filter(date.today() <= datetime.strptime(str(Show.start_time), "%Y-%m-%d %H:%M:%S").date()) """
   # Update past and upcoming show count for this venue before displaying to user
   #past shows will never become upcoming
   # upcoming shows might become past
@@ -197,8 +202,8 @@ def show_venue(venue_id):
       data.upcoming_shows.remove(show)
       data.past_shows.append (show)"""
 
-  data.past_shows_count = len(data.past_shows)
-  data.upcoming_shows_count = len(data.upcoming_shows)
+  data['past_shows_count'] = len(data['past_shows'])
+  data['upcoming_shows_count'] = len(data['upcoming_shows'])
   
   return render_template('pages/show_venue.html', venue=data)
 
