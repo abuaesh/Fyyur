@@ -173,21 +173,30 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   
-  venues = Venue.query.all()
+  #venues = Venue.query.all()
 
-  data = list(filter(lambda d: d.id == venue_id, venues))[0]
+  #data = list(filter(lambda d: d.id == venue_id, venues))[0]
+  data = {}
+  print(date.today())
+  data.past_shows = db.session.query(Show).\
+        filter(Show.venue_id == venue_id).\
+        filter(date.today() > datetime.strptime(str(Show.start_time), "%Y-%m-%d %H:%M:%S").date())
 
+  data.upcoming_shows = db.session.query(Show).\
+        filter(Show.venue_id == venue_id).\
+        filter(date.today() <= datetime.strptime(str(Show.start_time), "%Y-%m-%d %H:%M:%S").date())
   # Update past and upcoming show count for this venue before displaying to user
   #past shows will never become upcoming
   # upcoming shows might become past
   # so, we need to go through the upcoming shows list to find if any of them already happened in the past,
   # if so, then, move the show from the upcoming list to the past list
   # the counts are the sizes of both lists
-  for show in data.upcoming_shows:
+  """ for show in data.upcoming_shows:
     show_time = datetime.strptime(str(show.start_time), "%Y-%m-%d %H:%M:%S")
     if date.today() > show_time.date():
       data.upcoming_shows.remove(show)
-      data.past_shows.append(show)
+      data.past_shows.append (show)"""
+
   data.past_shows_count = len(data.past_shows)
   data.upcoming_shows_count = len(data.upcoming_shows)
   
